@@ -65,7 +65,7 @@
             0% { transform: scale(0); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
         }
-        #start-btn, #restart-btn, #results-restart-btn, #leaderboard-btn {
+        #start-btn, #restart-btn, #results-restart-btn, #leaderboard-btn, #share-score-btn {
             padding: 15px 40px;
             font-size: 18px;
             background: #ffdd59;
@@ -79,7 +79,7 @@
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
             transition: transform 0.2s;
         }
-        #start-btn:hover, #restart-btn:hover, #results-restart-btn:hover, #leaderboard-btn:hover {
+        #start-btn:hover, #restart-btn:hover, #results-restart-btn:hover, #leaderboard-btn:hover, #share-score-btn:hover {
             transform: scale(1.05);
         }
         .hidden { display: none !important; }
@@ -238,6 +238,30 @@
             color: #ffdd59;
             margin-bottom: 10px;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        /* 📤 BOTÓN DE COMPARTIR */
+        #share-score-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            background: rgba(255,255,255,0.2);
+            border: 2px solid white;
+            color: white;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #share-score-btn:hover {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.05);
+        }
+        #share-score-btn.copied {
+            background: #4ecdc4;
+            border-color: #4ecdc4;
         }
 
         /* 🏆 PANTALLA DE LEADERBOARD */
@@ -453,6 +477,8 @@
             
             <button id="results-restart-btn" onclick="startGame()">🔄 Jugar Otra Vez</button>
             <button id="results-leaderboard-btn" onclick="showLeaderboard()">🏆 Ver Ranking</button>
+            <!-- 📤 BOTÓN DE COMPARTIR PUNTUACIÓN -->
+            <button id="share-score-btn" onclick="shareScore()">📤 Compartir en el chat</button>
         </div>
     </div>
 
@@ -505,6 +531,7 @@
         const resultsMessageEl = document.getElementById('results-message');
         const resultsEmojiEl = document.getElementById('results-emoji');
         const accuracyStatEl = document.getElementById('accuracy-stat');
+        const shareScoreBtn = document.getElementById('share-score-btn');
         
         const leaderboardScreen = document.getElementById('leaderboard-screen');
         const leaderboardList = document.getElementById('leaderboard-list');
@@ -517,12 +544,58 @@
         const targetLifetime = 3000;
         const particleColors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#95e1d3', '#f38181', '#ffffff'];
 
+        // 📤 FUNCIÓN PARA COMPARTIR PUNTUACIÓN
+        function shareScore() {
+            const gameUrl = 'https://t.me/Clicker_Aleatorio_bot/clicker2026';
+            const message = `🎯 ¡Jugué Clicker Aleatorio!\n\n🏆 Mi puntuación: ${score} puntos\n⏱️ Tiempo: 30 segundos\n🎮 ¿Puedes superarme?\n\n👉 Juega aquí: ${gameUrl}`;
+            
+            // Opción A: Web Share API (móviles modernos)
+            if (navigator.share) {
+                navigator.share({
+                    title: '🎯 Clicker Aleatorio',
+                    text: message,
+                    url: gameUrl
+                }).catch(err => console.log('Error al compartir:', err));
+            } 
+            // Opción B: Copiar al portapapeles
+            else {
+                navigator.clipboard.writeText(message).then(() => {
+                    // Feedback visual en el botón
+                    const originalText = shareScoreBtn.innerHTML;
+                    shareScoreBtn.innerHTML = '✅ ¡Copiado! Pega en el chat';
+                    shareScoreBtn.classList.add('copied');
+                    
+                    setTimeout(() => {
+                        shareScoreBtn.innerHTML = originalText;
+                        shareScoreBtn.classList.remove('copied');
+                    }, 3000);
+                    
+                    // Alerta de confirmación
+                    if (tg && tg.showAlert) {
+                        tg.showAlert('📋 Puntuación copiada. ¡Pégala en cualquier chat de Telegram!');
+                    } else {
+                        alert('📋 Puntuación copiada. ¡Pégala en cualquier chat de Telegram!');
+                    }
+                }).catch(err => {
+                    console.error('Error al copiar:', err);
+                    if (tg && tg.showAlert) {
+                        tg.showAlert('❌ No se pudo copiar. Selecciona y copia manualmente.');
+                    } else {
+                        alert('❌ No se pudo copiar. Selecciona y copia manualmente:\n\n' + message);
+                    }
+                });
+            }
+            
+            // ✅ Haptic feedback en Telegram
+            if (tg && tg.HapticFeedback) {
+                tg.HapticFeedback.notificationOccurred('success');
+            }
+        }
+
         // ✅ OBTENER NOMBRE DE TELEGRAM O PEDIR MANUALMENTE
         function initPlayerName() {
-            // Verificar si estamos en Telegram
             if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 const user = tg.initDataUnsafe.user;
-                // Prioridad: username > first_name + last_name > first_name
                 if (user.username) {
                     playerName = '@' + user.username;
                 } else if (user.first_name) {
@@ -532,9 +605,8 @@
                 }
                 playerNameDisplay.innerText = 'Jugador: ' + playerName;
                 savePlayerNameToLocal();
-                nameInputScreen.classList.add('hidden'); // Ocultar pantalla de nombre
+                nameInputScreen.classList.add('hidden');
             } else {
-                // No es Telegram, mostrar input de nombre
                 const savedName = localStorage.getItem('clicker_player_name');
                 if (savedName) {
                     playerName = savedName;
@@ -546,7 +618,6 @@
             }
         }
 
-        // ✅ GUARDAR NOMBRE LOCALMENTE
         function savePlayerName() {
             const name = playerNameInput.value.trim();
             if (name.length > 0) {
@@ -555,7 +626,11 @@
                 savePlayerNameToLocal();
                 nameInputScreen.classList.add('hidden');
             } else {
-                alert('Por favor ingresa un nombre válido');
+                if (tg && tg.showAlert) {
+                    tg.showAlert('Por favor ingresa un nombre válido');
+                } else {
+                    alert('Por favor ingresa un nombre válido');
+                }
             }
         }
 
@@ -571,14 +646,11 @@
                 score: score,
                 date: new Date().toISOString()
             });
-            // Ordenar por puntuación (mayor a menor)
             scores.sort((a, b) => b.score - a.score);
-            // Mantener solo top 50
             scores.splice(50);
             localStorage.setItem('clicker_scores', JSON.stringify(scores));
         }
 
-        // ✅ OBTENER PUNTUACIONES
         function getScores() {
             const scores = localStorage.getItem('clicker_scores');
             return scores ? JSON.parse(scores) : [];
@@ -598,12 +670,10 @@
                     const li = document.createElement('li');
                     li.className = 'leaderboard-item';
                     
-                    // Top 3 con colores especiales
                     if (index === 0) li.classList.add('top-1');
                     else if (index === 1) li.classList.add('top-2');
                     else if (index === 2) li.classList.add('top-3');
                     
-                    // Emoji para top 3
                     let rankEmoji = '';
                     if (index === 0) rankEmoji = '🥇 ';
                     else if (index === 1) rankEmoji = '🥈 ';
@@ -625,7 +695,6 @@
             leaderboardScreen.classList.remove('visible');
         }
 
-        // ✅ SEGURIDAD: Escapar HTML
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
