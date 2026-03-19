@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Clicker Aleatorio con Ranking</title>
-    <!-- ✅ SCRIPT DE TELEGRAM WEB APP -->
+    <title>Clicker Aleatorio - 80 y 90 Radio</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        * { box-sizing: border-box; }
         body {
             font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -26,6 +26,7 @@
             font-size: 22px; 
             z-index: 10;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
         }
         .score-board {
             font-size: 32px;
@@ -36,6 +37,7 @@
             border-radius: 15px;
             z-index: 10;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
         }
         .timer { 
             font-size: 18px; 
@@ -43,6 +45,7 @@
             margin-bottom: 15px;
             z-index: 10;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            pointer-events: none;
         }
         .target {
             position: absolute;
@@ -57,10 +60,9 @@
             transition: transform 0.1s;
             -webkit-tap-highlight-color: transparent;
             animation: popIn 0.3s ease-out;
+            z-index: 30;
         }
-        .target:active { 
-            transform: scale(0.9); 
-        }
+        .target:active { transform: scale(0.9); }
         @keyframes popIn {
             0% { transform: scale(0); opacity: 0; }
             100% { transform: scale(1); opacity: 1; }
@@ -90,6 +92,7 @@
         .target.color-4 { background: #95e1d3; }
         .target.color-5 { background: #f38181; }
 
+        /* 🔊 BOTÓN DE SONIDO (efectos del juego) */
         #sound-btn {
             position: fixed;
             top: 15px;
@@ -111,6 +114,107 @@
         #sound-btn:hover {
             background: rgba(0,0,0,0.5);
             transform: scale(1.1);
+        }
+
+        /* 📻 CONTENEDOR DE RADIO */
+        .radio-container {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 100;
+            gap: 8px;
+        }
+
+        /* 🔘 BOTÓN DE RADIO CON IMAGEN */
+        #radio-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid white;
+            background: rgba(0,0,0,0.3);
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #radio-btn:hover {
+            background: rgba(0,0,0,0.5);
+            transform: scale(1.1);
+            border-color: #ffdd59;
+        }
+
+        /* 🖼️ IMAGEN DE RADIO */
+        .radio-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            transition: opacity 0.3s;
+        }
+
+        /* 🔄 OVERLAY DE CARGA */
+        .radio-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        /* 📻 ESTADO: CARGANDO */
+        #radio-btn.loading .radio-overlay {
+            opacity: 1;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 🔴 ESTADO: REPRODUCIENDO */
+        #radio-btn.playing {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4); }
+            50% { box-shadow: 0 0 0 12px rgba(255, 107, 107, 0); }
+        }
+
+        /* 📝 TEXTO DEBAJO DEL BOTÓN */
+        .radio-label {
+            font-size: 11px;
+            color: white;
+            text-align: center;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            white-space: nowrap;
+            font-weight: 500;
+            max-width: 100px;
+            line-height: 1.2;
+        }
+
+        @media (max-width: 360px) {
+            .radio-label { font-size: 10px; max-width: 80px; }
         }
 
         /* 💬 MENSAJES FLOTANTES */
@@ -162,10 +266,7 @@
             pointer-events: none;
             transition: opacity 0.3s ease;
         }
-        #results-screen.visible {
-            opacity: 1;
-            pointer-events: all;
-        }
+        #results-screen.visible { opacity: 1; pointer-events: all; }
         .results-content {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 40px;
@@ -238,6 +339,7 @@
             color: #ffdd59;
             margin-bottom: 10px;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            pointer-events: none;
         }
 
         /* 📤 BOTÓN DE COMPARTIR */
@@ -282,10 +384,7 @@
             transition: opacity 0.3s ease;
             padding-top: 60px;
         }
-        #leaderboard-screen.visible {
-            opacity: 1;
-            pointer-events: all;
-        }
+        #leaderboard-screen.visible { opacity: 1; pointer-events: all; }
         .leaderboard-content {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             padding: 30px;
@@ -304,11 +403,7 @@
             color: #ffdd59;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
         }
-        .leaderboard-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
+        .leaderboard-list { list-style: none; padding: 0; margin: 0; }
         .leaderboard-item {
             display: flex;
             justify-content: space-between;
@@ -320,47 +415,14 @@
             border: 1px solid rgba(255,255,255,0.2);
             transition: transform 0.2s;
         }
-        .leaderboard-item:hover {
-            transform: scale(1.02);
-        }
-        .leaderboard-item.top-1 {
-            background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
-            border: 2px solid #ffffff;
-        }
-        .leaderboard-item.top-2 {
-            background: linear-gradient(135deg, #c0c0c0 0%, #a0a0a0 100%);
-            border: 2px solid #ffffff;
-        }
-        .leaderboard-item.top-3 {
-            background: linear-gradient(135deg, #cd7f32 0%, #b87333 100%);
-            border: 2px solid #ffffff;
-        }
-        .leaderboard-rank {
-            font-size: 20px;
-            font-weight: bold;
-            width: 40px;
-            color: #ffffff;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        .leaderboard-name {
-            flex: 1;
-            font-size: 16px;
-            color: #ffffff;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-            padding: 0 10px;
-        }
-        .leaderboard-score {
-            font-size: 18px;
-            font-weight: bold;
-            color: #ffdd59;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-        }
-        .leaderboard-empty {
-            text-align: center;
-            color: #ffffff;
-            padding: 30px;
-            font-size: 18px;
-        }
+        .leaderboard-item:hover { transform: scale(1.02); }
+        .leaderboard-item.top-1 { background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%); border: 2px solid #ffffff; }
+        .leaderboard-item.top-2 { background: linear-gradient(135deg, #c0c0c0 0%, #a0a0a0 100%); border: 2px solid #ffffff; }
+        .leaderboard-item.top-3 { background: linear-gradient(135deg, #cd7f32 0%, #b87333 100%); border: 2px solid #ffffff; }
+        .leaderboard-rank { font-size: 20px; font-weight: bold; width: 40px; color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .leaderboard-name { flex: 1; font-size: 16px; color: #ffffff; text-shadow: 1px 1px 3px rgba(0,0,0,0.5); padding: 0 10px; }
+        .leaderboard-score { font-size: 18px; font-weight: bold; color: #ffdd59; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .leaderboard-empty { text-align: center; color: #ffffff; padding: 30px; font-size: 18px; }
         #close-leaderboard-btn {
             margin-top: 20px;
             padding: 12px 30px;
@@ -372,9 +434,7 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-        #close-leaderboard-btn:hover {
-            background: rgba(255,255,255,0.4);
-        }
+        #close-leaderboard-btn:hover { background: rgba(255,255,255,0.4); }
 
         /* 📝 PANTALLA DE INGRESO DE NOMBRE */
         #name-input-screen {
@@ -399,12 +459,7 @@
             max-width: 90%;
             border: 3px solid rgba(255,255,255,0.3);
         }
-        .name-input-title {
-            font-size: 24px;
-            margin-bottom: 20px;
-            color: #ffffff;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
-        }
+        .name-input-title { font-size: 24px; margin-bottom: 20px; color: #ffffff; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
         #player-name-input {
             width: 100%;
             padding: 15px;
@@ -416,9 +471,7 @@
             color: white;
             text-align: center;
         }
-        #player-name-input::placeholder {
-            color: rgba(255,255,255,0.5);
-        }
+        #player-name-input::placeholder { color: rgba(255,255,255,0.5); }
         #save-name-btn {
             padding: 15px 40px;
             font-size: 18px;
@@ -440,7 +493,13 @@
 </head>
 <body>
 
-    <!-- 📝 PANTALLA DE INGRESO DE NOMBRE (Solo si no es Telegram) -->
+    <!-- 📻 ELEMENTO DE AUDIO PARA LA RADIO -->
+    <audio id="radio-audio" preload="none" crossorigin="anonymous">
+        <source src="https://stream.zeno.fm/ndhkmuknva0uv" type="audio/mpeg">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
+
+    <!-- 📝 PANTALLA DE INGRESO DE NOMBRE -->
     <div id="name-input-screen">
         <div class="name-input-content">
             <div class="name-input-title">👤 Ingresa tu Nombre</div>
@@ -449,7 +508,20 @@
         </div>
     </div>
 
-    <button id="sound-btn" onclick="toggleSound()">🔊</button>
+    <!-- 📻 GRUPO DE RADIO CON IMAGEN Y TEXTO -->
+    <div class="radio-container">
+        <button id="radio-btn" onclick="toggleRadio()" title="Escuchar 80 y 90 Radio">
+            <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEgqvizWNyyqSmA1V6SOmns4wLWw849mHxRjABDTG0o2iyoHbsDPc9nc0rQW4iW6bfpIQLNn6pOgPlWsygdsuMury7g3ss1yJwDOJY1kHXyQwi53Lp9cyIMduU3NzUVaeme8n6V3_yhhGMEIb5XrCmuBejA6FoE5Uyt9ZmNYAqCxqhFmJf2wA9DpTtz9xg/s640/s80y90.png" 
+                 alt="80 y 90 Radio" 
+                 class="radio-img"
+                 id="radio-img">
+            <div class="radio-overlay" id="radio-overlay">🔄</div>
+        </button>
+        <span class="radio-label">80 y 90 Radio</span>
+    </div>
+
+    <!-- 🔊 BOTÓN DE SONIDO (efectos del juego) -->
+    <button id="sound-btn" onclick="toggleSound()" title="Efectos de sonido">🔊</button>
 
     <h1>🎯 Clicker Aleatorio</h1>
     <div class="timer" id="timer">Tiempo: 30s</div>
@@ -477,7 +549,6 @@
             
             <button id="results-restart-btn" onclick="startGame()">🔄 Jugar Otra Vez</button>
             <button id="results-leaderboard-btn" onclick="showLeaderboard()">🏆 Ver Ranking</button>
-            <!-- 📤 BOTÓN DE COMPARTIR PUNTUACIÓN -->
             <button id="share-score-btn" onclick="shareScore()">📤 Compartir en el chat</button>
         </div>
     </div>
@@ -486,9 +557,7 @@
     <div id="leaderboard-screen">
         <div class="leaderboard-content">
             <div class="leaderboard-title">🏆 Top Jugadores</div>
-            <ul class="leaderboard-list" id="leaderboard-list">
-                <!-- Se llena dinámicamente -->
-            </ul>
+            <ul class="leaderboard-list" id="leaderboard-list"></ul>
             <div class="leaderboard-empty hidden" id="leaderboard-empty">
                 ¡No hay puntuaciones aún!<br>¡Sé el primero! 🎮
             </div>
@@ -502,6 +571,15 @@
         tg.ready();
         tg.expand();
 
+        // 📻 VARIABLES DE RADIO
+        const radioAudio = document.getElementById('radio-audio');
+        const radioBtn = document.getElementById('radio-btn');
+        const radioImg = document.getElementById('radio-img');
+        const radioOverlay = document.getElementById('radio-overlay');
+        let radioEnabled = false;
+        let radioLoading = false;
+
+        // 🎮 VARIABLES DEL JUEGO
         let playerName = '';
         let score = 0;
         let timeLeft = 30;
@@ -516,6 +594,7 @@
         let comboCount = 0;
         let milestonesShown = [];
 
+        // 🔗 REFERENCIAS DOM
         const scoreEl = document.getElementById('score');
         const timerEl = document.getElementById('timer');
         const startBtn = document.getElementById('start-btn');
@@ -540,69 +619,88 @@
         const nameInputScreen = document.getElementById('name-input-screen');
         const playerNameInput = document.getElementById('player-name-input');
 
+        // ⚙️ CONFIGURACIÓN
         const sizes = [60, 80, 100, 120];
         const targetLifetime = 3000;
         const particleColors = ['#ff6b6b', '#4ecdc4', '#ffe66d', '#95e1d3', '#f38181', '#ffffff'];
+
+        // 📻 FUNCIÓN PARA ACTIVAR/DESACTIVAR RADIO
+        function toggleRadio() {
+            if (radioLoading) return;
+            radioEnabled = !radioEnabled;
+            
+            if (radioEnabled) {
+                radioLoading = true;
+                radioBtn.classList.add('loading');
+                radioAudio.pause();
+                radioAudio.currentTime = 0;
+                
+                const playPromise = radioAudio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        radioLoading = false;
+                        radioBtn.classList.remove('loading');
+                        radioBtn.classList.add('playing');
+                        if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                    }).catch(error => {
+                        console.error('Error al reproducir radio:', error);
+                        radioEnabled = false;
+                        radioLoading = false;
+                        radioBtn.classList.remove('loading', 'playing');
+                        if (tg && tg.showAlert) {
+                            tg.showAlert('❌ No se pudo conectar a 80 y 90 Radio.');
+                        } else {
+                            alert('❌ No se pudo conectar a la radio.');
+                        }
+                    });
+                }
+            } else {
+                radioAudio.pause();
+                radioBtn.classList.remove('playing', 'loading');
+                radioLoading = false;
+                if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            }
+        }
 
         // 📤 FUNCIÓN PARA COMPARTIR PUNTUACIÓN
         function shareScore() {
             const gameUrl = 'https://t.me/Clicker_Aleatorio_bot/clicker2026';
             const message = `🎯 ¡Jugué Clicker Aleatorio!\n\n🏆 Mi puntuación: ${score} puntos\n⏱️ Tiempo: 30 segundos\n🎮 ¿Puedes superarme?\n\n👉 Juega aquí: ${gameUrl}`;
             
-            // Opción A: Web Share API (móviles modernos)
             if (navigator.share) {
-                navigator.share({
-                    title: '🎯 Clicker Aleatorio',
-                    text: message,
-                    url: gameUrl
-                }).catch(err => console.log('Error al compartir:', err));
-            } 
-            // Opción B: Copiar al portapapeles
-            else {
+                navigator.share({ title: '🎯 Clicker Aleatorio', text: message, url: gameUrl })
+                    .catch(err => console.log('Error al compartir:', err));
+            } else {
                 navigator.clipboard.writeText(message).then(() => {
-                    // Feedback visual en el botón
                     const originalText = shareScoreBtn.innerHTML;
-                    shareScoreBtn.innerHTML = '✅ ¡Copiado! Pega en el chat';
+                    shareScoreBtn.innerHTML = '✅ ¡Copiado!';
                     shareScoreBtn.classList.add('copied');
-                    
                     setTimeout(() => {
                         shareScoreBtn.innerHTML = originalText;
                         shareScoreBtn.classList.remove('copied');
                     }, 3000);
-                    
-                    // Alerta de confirmación
                     if (tg && tg.showAlert) {
-                        tg.showAlert('📋 Puntuación copiada. ¡Pégala en cualquier chat de Telegram!');
+                        tg.showAlert('📋 Puntuación copiada. ¡Pégala en Telegram!');
                     } else {
-                        alert('📋 Puntuación copiada. ¡Pégala en cualquier chat de Telegram!');
+                        alert('📋 Puntuación copiada. ¡Pégala en Telegram!');
                     }
                 }).catch(err => {
                     console.error('Error al copiar:', err);
                     if (tg && tg.showAlert) {
-                        tg.showAlert('❌ No se pudo copiar. Selecciona y copia manualmente.');
+                        tg.showAlert('❌ No se pudo copiar.');
                     } else {
-                        alert('❌ No se pudo copiar. Selecciona y copia manualmente:\n\n' + message);
+                        alert('❌ Copia manualmente:\n\n' + message);
                     }
                 });
             }
-            
-            // ✅ Haptic feedback en Telegram
-            if (tg && tg.HapticFeedback) {
-                tg.HapticFeedback.notificationOccurred('success');
-            }
+            if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
         }
 
-        // ✅ OBTENER NOMBRE DE TELEGRAM O PEDIR MANUALMENTE
+        // 👤 SISTEMA DE NOMBRES
         function initPlayerName() {
             if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 const user = tg.initDataUnsafe.user;
-                if (user.username) {
-                    playerName = '@' + user.username;
-                } else if (user.first_name) {
-                    playerName = user.first_name + (user.last_name ? ' ' + user.last_name : '');
-                } else {
-                    playerName = 'Jugador';
-                }
+                playerName = user.username ? '@' + user.username : (user.first_name ? user.first_name + (user.last_name ? ' ' + user.last_name : '') : 'Jugador');
                 playerNameDisplay.innerText = 'Jugador: ' + playerName;
                 savePlayerNameToLocal();
                 nameInputScreen.classList.add('hidden');
@@ -626,26 +724,17 @@
                 savePlayerNameToLocal();
                 nameInputScreen.classList.add('hidden');
             } else {
-                if (tg && tg.showAlert) {
-                    tg.showAlert('Por favor ingresa un nombre válido');
-                } else {
-                    alert('Por favor ingresa un nombre válido');
-                }
+                if (tg && tg.showAlert) tg.showAlert('Por favor ingresa un nombre válido');
+                else alert('Por favor ingresa un nombre válido');
             }
         }
 
-        function savePlayerNameToLocal() {
-            localStorage.setItem('clicker_player_name', playerName);
-        }
+        function savePlayerNameToLocal() { localStorage.setItem('clicker_player_name', playerName); }
 
-        // ✅ GUARDAR PUNTUACIÓN
+        // 🏆 SISTEMA DE PUNTUACIONES
         function saveScore(score) {
             const scores = getScores();
-            scores.push({
-                name: playerName,
-                score: score,
-                date: new Date().toISOString()
-            });
+            scores.push({ name: playerName, score: score, date: new Date().toISOString() });
             scores.sort((a, b) => b.score - a.score);
             scores.splice(50);
             localStorage.setItem('clicker_scores', JSON.stringify(scores));
@@ -656,52 +745,31 @@
             return scores ? JSON.parse(scores) : [];
         }
 
-        // ✅ MOSTRAR LEADERBOARD
         function showLeaderboard() {
             const scores = getScores();
             leaderboardList.innerHTML = '';
-            
             if (scores.length === 0) {
                 leaderboardEmpty.classList.remove('hidden');
             } else {
                 leaderboardEmpty.classList.add('hidden');
-                
                 scores.forEach((entry, index) => {
                     const li = document.createElement('li');
                     li.className = 'leaderboard-item';
-                    
                     if (index === 0) li.classList.add('top-1');
                     else if (index === 1) li.classList.add('top-2');
                     else if (index === 2) li.classList.add('top-3');
-                    
-                    let rankEmoji = '';
-                    if (index === 0) rankEmoji = '🥇 ';
-                    else if (index === 1) rankEmoji = '🥈 ';
-                    else if (index === 2) rankEmoji = '🥉 ';
-                    
-                    li.innerHTML = `
-                        <span class="leaderboard-rank">${rankEmoji}#${index + 1}</span>
-                        <span class="leaderboard-name">${escapeHtml(entry.name)}</span>
-                        <span class="leaderboard-score">${entry.score} pts</span>
-                    `;
+                    const rankEmoji = index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : '';
+                    li.innerHTML = `<span class="leaderboard-rank">${rankEmoji}#${index + 1}</span><span class="leaderboard-name">${escapeHtml(entry.name)}</span><span class="leaderboard-score">${entry.score} pts</span>`;
                     leaderboardList.appendChild(li);
                 });
             }
-            
             leaderboardScreen.classList.add('visible');
         }
 
-        function hideLeaderboard() {
-            leaderboardScreen.classList.remove('visible');
-        }
+        function hideLeaderboard() { leaderboardScreen.classList.remove('visible'); }
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
 
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // ✨ CREAR PARTÍCULAS
+        // ✨ PARTÍCULAS
         function createParticles(x, y, count = 12) {
             for (let i = 0; i < count; i++) {
                 const particle = document.createElement('div');
@@ -716,18 +784,16 @@
                 particle.style.top = y + 'px';
                 const angle = (Math.random() * 360) * (Math.PI / 180);
                 const distance = Math.random() * 80 + 40;
-                const tx = Math.cos(angle) * distance;
-                const ty = Math.sin(angle) * distance;
-                particle.style.setProperty('--tx', tx + 'px');
-                particle.style.setProperty('--ty', ty + 'px');
+                particle.style.setProperty('--tx', Math.cos(angle) * distance + 'px');
+                particle.style.setProperty('--ty', Math.sin(angle) * distance + 'px');
                 const duration = Math.random() * 0.3 + 0.4;
                 particle.style.animationDuration = duration + 's';
                 gameArea.appendChild(particle);
-                setTimeout(() => { particle.remove(); }, duration * 1000);
+                setTimeout(() => particle.remove(), duration * 1000);
             }
         }
 
-        // 💬 MENSAJE FLOTANTE
+        // 💬 MENSAJES FLOTANTES
         function showFloatingMessage(x, y, text, type = 'positive') {
             const msg = document.createElement('div');
             msg.className = `floating-message msg-${type}`;
@@ -735,7 +801,7 @@
             msg.style.left = x + 'px';
             msg.style.top = y + 'px';
             gameArea.appendChild(msg);
-            setTimeout(() => { msg.remove(); }, 1000);
+            setTimeout(() => msg.remove(), 1000);
         }
 
         // 🏆 MILESTONES
@@ -744,43 +810,34 @@
             milestones.forEach(ms => {
                 if (newScore === ms && !milestonesShown.includes(ms)) {
                     milestonesShown.push(ms);
-                    const centerX = window.innerWidth / 2 - 100;
-                    const centerY = window.innerHeight / 2 - 50;
-                    let message = '';
-                    if (ms === 10) message = '🎉 ¡10 Puntos!';
-                    else if (ms === 20) message = '⭐ ¡20 Puntos!';
-                    else if (ms === 30) message = '🔥 ¡30 Puntos!';
-                    else if (ms === 40) message = '👑 ¡40 Puntos!';
-                    showFloatingMessage(centerX, centerY, message, 'milestone');
-                    createParticles(window.innerWidth / 2, window.innerHeight / 2, 30);
+                    const msg = ms === 10 ? '🎉 ¡10 Puntos!' : ms === 20 ? '⭐ ¡20 Puntos!' : ms === 30 ? '🔥 ¡30 Puntos!' : '👑 ¡40 Puntos!';
+                    showFloatingMessage(window.innerWidth/2 - 100, window.innerHeight/2 - 50, msg, 'milestone');
+                    createParticles(window.innerWidth/2, window.innerHeight/2, 30);
                     if (audioContext && soundEnabled) {
-                        const oscillator = audioContext.createOscillator();
-                        const gainNode = audioContext.createGain();
-                        oscillator.connect(gainNode);
-                        gainNode.connect(audioContext.destination);
-                        oscillator.frequency.value = 800;
-                        oscillator.type = 'sine';
-                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
-                        oscillator.start(audioContext.currentTime);
-                        oscillator.stop(audioContext.currentTime + 0.4);
+                        const osc = audioContext.createOscillator(), gain = audioContext.createGain();
+                        osc.connect(gain); gain.connect(audioContext.destination);
+                        osc.frequency.value = 800; osc.type = 'sine';
+                        gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+                        osc.start(); osc.stop(audioContext.currentTime + 0.4);
                     }
                 }
             });
         }
 
-        // ⏱️ TIEMPO
+        // ⏱️ ALERTAS DE TIEMPO
         function checkTimeWarnings() {
             if (timeLeft === 10 && !milestonesShown.includes('time10')) {
                 milestonesShown.push('time10');
-                showFloatingMessage(window.innerWidth / 2 - 80, 100, '⏱️ ¡10 Segundos!', 'warning');
+                showFloatingMessage(window.innerWidth/2 - 80, 100, '⏱️ ¡10 Segundos!', 'warning');
             }
             if (timeLeft === 5 && !milestonesShown.includes('time5')) {
                 milestonesShown.push('time5');
-                showFloatingMessage(window.innerWidth / 2 - 60, 100, '⚡ ¡APÚRATE!', 'warning');
+                showFloatingMessage(window.innerWidth/2 - 60, 100, '⚡ ¡APÚRATE!', 'warning');
             }
         }
 
+        // 🏆 MENSAJES DE RESULTADO
         function getResultData(score) {
             if (score >= 40) return { emoji: '👑', message: '¡LEGENDARIO! ¡Eres imparable!', class: 'level-legendary' };
             else if (score >= 30) return { emoji: '🔥', message: '¡INCREÍBLE! ¡Nivel experto!', class: 'level-epic' };
@@ -789,80 +846,31 @@
             else return { emoji: '💪', message: '¡Practica más! Tú puedes', class: 'level-beginner' };
         }
 
-        function initAudio() {
-            if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-
+        // 🔊 SISTEMA DE AUDIO (efectos)
+        function initAudio() { if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)(); }
         function playSound(type) {
             if (!soundEnabled || !audioContext) return;
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
+            const osc = audioContext.createOscillator(), gain = audioContext.createGain();
+            osc.connect(gain); gain.connect(audioContext.destination);
             switch(type) {
-                case 'hit':
-                    oscillator.frequency.value = 600;
-                    oscillator.type = 'sine';
-                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.1);
-                    break;
-                case 'start':
-                    oscillator.frequency.value = 440;
-                    oscillator.type = 'sine';
-                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.3);
-                    setTimeout(() => {
-                        const osc2 = audioContext.createOscillator();
-                        const gain2 = audioContext.createGain();
-                        osc2.connect(gain2);
-                        gain2.connect(audioContext.destination);
-                        osc2.frequency.value = 554;
-                        osc2.type = 'sine';
-                        gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
-                        gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-                        osc2.start();
-                        osc2.stop(audioContext.currentTime + 0.3);
-                    }, 150);
-                    break;
-                case 'gameover':
-                    oscillator.frequency.value = 300;
-                    oscillator.type = 'sine';
-                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                    oscillator.start(audioContext.currentTime);
-                    oscillator.stop(audioContext.currentTime + 0.5);
-                    setTimeout(() => {
-                        const osc2 = audioContext.createOscillator();
-                        const gain2 = audioContext.createGain();
-                        osc2.connect(gain2);
-                        gain2.connect(audioContext.destination);
-                        osc2.frequency.value = 200;
-                        osc2.type = 'sine';
-                        gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
-                        gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-                        osc2.start();
-                        osc2.stop(audioContext.currentTime + 0.5);
-                    }, 300);
-                    break;
+                case 'hit': osc.frequency.value = 600; osc.type = 'sine'; gain.gain.setValueAtTime(0.3, audioContext.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1); osc.start(); osc.stop(audioContext.currentTime + 0.1); break;
+                case 'start': osc.frequency.value = 440; osc.type = 'sine'; gain.gain.setValueAtTime(0.3, audioContext.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3); osc.start(); osc.stop(audioContext.currentTime + 0.3); setTimeout(() => { const o2 = audioContext.createOscillator(), g2 = audioContext.createGain(); o2.connect(g2); g2.connect(audioContext.destination); o2.frequency.value = 554; o2.type = 'sine'; g2.gain.setValueAtTime(0.3, audioContext.currentTime); g2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3); o2.start(); o2.stop(audioContext.currentTime + 0.3); }, 150); break;
+                case 'gameover': osc.frequency.value = 300; osc.type = 'sine'; gain.gain.setValueAtTime(0.3, audioContext.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5); osc.start(); osc.stop(audioContext.currentTime + 0.5); setTimeout(() => { const o2 = audioContext.createOscillator(), g2 = audioContext.createGain(); o2.connect(g2); g2.connect(audioContext.destination); o2.frequency.value = 200; o2.type = 'sine'; g2.gain.setValueAtTime(0.3, audioContext.currentTime); g2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5); o2.start(); o2.stop(audioContext.currentTime + 0.5); }, 300); break;
             }
         }
+        function toggleSound() { soundEnabled = !soundEnabled; soundBtn.innerText = soundEnabled ? '🔊' : '🔇'; soundBtn.style.opacity = soundEnabled ? '1' : '0.5'; }
 
-        function toggleSound() {
-            soundEnabled = !soundEnabled;
-            soundBtn.innerText = soundEnabled ? '🔊' : '🔇';
-            soundBtn.style.opacity = soundEnabled ? '1' : '0.5';
-        }
-
+        // 🎯 LÓGICA DEL JUEGO
         function getRandomSize() { return sizes[Math.floor(Math.random() * sizes.length)]; }
         function getRandomColor() { return 'color-' + (Math.floor(Math.random() * 5) + 1); }
+        
         function getRandomPosition(size) {
+            const safeTop = 200, safeBottom = 120;
             const maxX = window.innerWidth - size - 20;
-            const maxY = window.innerHeight - size - 150;
-            return { x: Math.floor(Math.random() * maxX) + 10, y: Math.floor(Math.random() * maxY) + 150 };
+            const maxY = window.innerHeight - size - safeBottom;
+            const minY = safeTop;
+            if (maxY <= minY) return { x: Math.floor(Math.random() * (window.innerWidth - size - 20)) + 10, y: Math.floor(Math.random() * (window.innerHeight - size - 200)) + 200 };
+            return { x: Math.floor(Math.random() * maxX) + 10, y: Math.floor(Math.random() * (maxY - minY)) + minY };
         }
 
         function createTarget() {
@@ -873,29 +881,20 @@
                 currentTarget.remove();
                 targetsMissed++;
             }
-            const size = getRandomSize();
-            const pos = getRandomPosition(size);
-            const color = getRandomColor();
+            const size = getRandomSize(), pos = getRandomPosition(size), color = getRandomColor();
             const target = document.createElement('div');
             target.className = `target ${color}`;
-            target.style.width = size + 'px';
-            target.style.height = size + 'px';
-            target.style.left = pos.x + 'px';
-            target.style.top = pos.y + 'px';
-            target.style.fontSize = (size / 3) + 'px';
-            target.innerHTML = '🎯';
-            target.addEventListener('click', (e) => { e.stopPropagation(); hitTarget(e); });
-            target.addEventListener('touchstart', (e) => { e.preventDefault(); hitTarget(e); });
-            gameArea.appendChild(target);
-            currentTarget = target;
-            targetsSpawned++;
+            target.style.width = size + 'px'; target.style.height = size + 'px';
+            target.style.left = pos.x + 'px'; target.style.top = pos.y + 'px';
+            target.style.fontSize = (size / 3) + 'px'; target.innerHTML = '🎯';
+            target.addEventListener('click', e => { e.stopPropagation(); hitTarget(e); });
+            target.addEventListener('touchstart', e => { e.preventDefault(); hitTarget(e); });
+            gameArea.appendChild(target); currentTarget = target; targetsSpawned++;
             setTimeout(() => {
                 if (currentTarget === target && isPlaying) {
                     const rect = target.getBoundingClientRect();
                     showFloatingMessage(rect.left + 20, rect.top, '¡Se escapó!', 'negative');
-                    target.remove();
-                    currentTarget = null;
-                    targetsMissed++;
+                    target.remove(); currentTarget = null; targetsMissed++;
                 }
             }, targetLifetime);
         }
@@ -908,48 +907,28 @@
             const now = Date.now();
             comboCount = (now - lastClickTime < 500) ? comboCount + 1 : 1;
             lastClickTime = now;
-            score++;
-            scoreEl.innerText = score;
-            playSound('hit');
-            let message = '+1';
-            let type = 'positive';
+            score++; scoreEl.innerText = score; playSound('hit');
+            let message = '+1', type = 'positive';
             if (comboCount >= 3) { message = `🔥 ¡Combo x${comboCount}!`; type = 'milestone'; }
-            else if (comboCount >= 2) { message = '¡Rápido!'; type = 'positive'; }
+            else if (comboCount >= 2) { message = '¡Rápido!'; }
             showFloatingMessage(x - 30, y - 30, message, type);
             checkMilestones(score);
             if (currentTarget) {
-                currentTarget.style.transform = 'scale(1.2)';
-                currentTarget.style.opacity = '0';
+                currentTarget.style.transform = 'scale(1.2)'; currentTarget.style.opacity = '0';
                 setTimeout(() => { if (currentTarget) currentTarget.remove(); currentTarget = null; }, 100);
             }
             setTimeout(() => createTarget(), 100);
         }
 
         function startGame() {
-            initAudio();
-            resultsScreen.classList.remove('visible');
-            score = 0;
-            timeLeft = 30;
-            targetsSpawned = 0;
-            targetsMissed = 0;
-            comboCount = 0;
-            lastClickTime = 0;
-            milestonesShown = [];
-            isPlaying = true;
-            scoreEl.innerText = score;
-            timerEl.innerText = "⏱️ Tiempo: " + timeLeft + "s";
-            timerEl.style.color = '#ffdd59';
-            startBtn.classList.add('hidden');
-            leaderboardBtn.classList.add('hidden');
-            restartBtn.classList.add('hidden');
-            gameArea.innerHTML = '';
-            currentTarget = null;
-            playSound('start');
-            showFloatingMessage(window.innerWidth / 2 - 50, window.innerHeight / 2, '¡COMIENZA!', 'milestone');
-            createTarget();
+            initAudio(); resultsScreen.classList.remove('visible');
+            score = 0; timeLeft = 30; targetsSpawned = 0; targetsMissed = 0; comboCount = 0; lastClickTime = 0; milestonesShown = [];
+            isPlaying = true; scoreEl.innerText = score; timerEl.innerText = "⏱️ Tiempo: " + timeLeft + "s"; timerEl.style.color = '#ffdd59';
+            startBtn.classList.add('hidden'); leaderboardBtn.classList.add('hidden'); restartBtn.classList.add('hidden');
+            gameArea.innerHTML = ''; currentTarget = null; playSound('start');
+            showFloatingMessage(window.innerWidth/2 - 50, window.innerHeight/2, '¡COMIENZA!', 'milestone'); createTarget();
             gameInterval = setInterval(() => {
-                timeLeft--;
-                timerEl.innerText = "⏱️ Tiempo: " + timeLeft + "s";
+                timeLeft--; timerEl.innerText = "⏱️ Tiempo: " + timeLeft + "s";
                 if (timeLeft <= 10) timerEl.style.color = '#ff6b6b';
                 checkTimeWarnings();
                 if (timeLeft <= 0) endGame();
@@ -957,29 +936,32 @@
         }
 
         function endGame() {
-            clearInterval(gameInterval);
-            isPlaying = false;
+            clearInterval(gameInterval); isPlaying = false;
             if (currentTarget) { currentTarget.remove(); currentTarget = null; }
-            gameArea.innerHTML = '';
-            playSound('gameover');
+            gameArea.innerHTML = ''; playSound('gameover');
             finalScoreEl.innerText = score;
             const resultData = getResultData(score);
-            resultsEmojiEl.innerText = resultData.emoji;
-            resultsMessageEl.innerText = resultData.message;
+            resultsEmojiEl.innerText = resultData.emoji; resultsMessageEl.innerText = resultData.message;
             resultsContent.className = 'results-content ' + resultData.class;
             const accuracy = targetsSpawned > 0 ? Math.round((score / targetsSpawned) * 100) : 0;
             accuracyStatEl.innerText = `🎯 Precisión: ${accuracy}%`;
-            
-            // ✅ GUARDAR PUNTUACIÓN
-            saveScore(score);
-            
-            resultsScreen.classList.add('visible');
+            saveScore(score); resultsScreen.classList.add('visible');
         }
 
-        // ✅ INICIALIZAR AL CARGAR
-        initPlayerName();
+        // 🎯 EVENT LISTENERS DE RADIO
+        radioAudio.addEventListener('playing', () => { radioLoading = false; radioBtn.classList.remove('loading'); radioBtn.classList.add('playing'); });
+        radioAudio.addEventListener('pause', () => { radioBtn.classList.remove('playing', 'loading'); });
+        radioAudio.addEventListener('error', () => { radioEnabled = false; radioLoading = false; radioBtn.classList.remove('loading', 'playing'); });
+        radioAudio.addEventListener('stalled', () => {
+            if (radioEnabled && !radioLoading) {
+                radioAudio.pause();
+                setTimeout(() => { if (radioEnabled) radioAudio.play().catch(() => {}); }, 2000);
+            }
+        });
 
-        document.addEventListener('dblclick', (e) => { e.preventDefault(); }, { passive: false });
+        // ✅ INICIALIZAR
+        initPlayerName();
+        document.addEventListener('dblclick', e => { e.preventDefault(); }, { passive: false });
     </script>
 </body>
 </html>
